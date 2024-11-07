@@ -1,20 +1,29 @@
-
 const express = require("express");
-const { moderateJoke, editJoke, approveJoke, rejectJoke } = require("../controllers/joke");
+const {
+  submitJoke,
+  updateJoke,
+  getNewJoke,
+  approveJoke,
+  rejectJoke,
+  getJokeTypes,
+  getAllJokes,
+  getAllSubmittedJokes,
+} = require("../controllers/joke");
 const { authMiddleware } = require("../middlewares/auth");
 const router = express.Router();
 
-// Route: Fetch jokes (only accessible by the moderator)
-router.get('/jokes/moderate',authMiddleware, moderateJoke);
+router.get("/jokes/allSubmittedJokes", authMiddleware, getAllSubmittedJokes);
 
-// Route: Edit a joke's content or type
-router.put('/jokes/edit/:id',authMiddleware, editJoke);
+router.get("/jokes/newJoke", authMiddleware, getNewJoke);
 
-// Route: Approve a joke
-router.put('/jokes/approve/:id',authMiddleware, approveJoke);
+router.put("/jokes/update/:id", authMiddleware, updateJoke);
 
-// Route: Reject a joke
-router.delete('/jokes/reject/:id',authMiddleware, rejectJoke);
+router.put("/jokes/approve/:id", authMiddleware, approveJoke);
 
+router.delete("/jokes/reject/:id", authMiddleware, rejectJoke);
+
+router.post("/jokes/submit", submitJoke);
+
+router.get("/jokes/types", getJokeTypes);
 
 module.exports = router;

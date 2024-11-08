@@ -1,22 +1,21 @@
-
+const jwt = require("jsonwebtoken");
 
 const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader) return res.status(401).json({ message: 'Unauthorized' });
-  
-    const base64Credentials = authHeader.split(' ')[1];
-   
-    //const credentials = Buffer.from(base64Credentials, 'base64').toString('ascii');
-    console.log('credentials',base64Credentials)
-    const [email, password] = base64Credentials.split(':');
-  
+  const authHeader = req.headers["authorization"];
 
-    if (email === 'admin@admin.com' && password === 'admin123') {
-      next();
-    } else {
-      res.status(401).json({ message: 'Invalid credentials' });
-    }
-  };
-  
+  if (!authHeader) return res.status(401).json({ message: "Unauthorized" });
 
-  module.exports={authMiddleware};
+  const token = authHeader.split(" ")[1]; // Bearer token
+
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid or expired token" });
+  }
+};
+
+module.exports = { authMiddleware };

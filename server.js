@@ -6,9 +6,12 @@ const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const morgan = require("morgan");
 const fs=require('fs');
-
+const connectDB = require("./mongoDb/db");
 const environment = process.env.NODE_ENV || 'development';
 console.log(`Node.js environment: ${environment}`);
+
+
+connectDB();
 
 //middlewares
 app.use(morgan("dev"));
@@ -36,6 +39,7 @@ fs.readdir(directoryPath, (err, files) => {
 });
 
 app.get('/api/test', (req, res) => {
+
   // Logic for handling the GET request goes here
   res.send('GET request received'); // Example response
 });

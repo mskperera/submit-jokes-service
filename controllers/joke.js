@@ -1,44 +1,12 @@
+const Joke = require("../mongoDb/models/Joke");
 const { getJokeTypes_srv } = require("../services/joke");
-
-// In-memory "database" of jokes
-let submittedJokes = [
-  { id: 1, typeId: 1, content: "This is a funny joke!", approved: false },
-  {
-    id: 2,
-    typeId: 2,
-    content: "Why did the programmer quit? Because he didn't get arrays!",
-    approved: false,
-  },
-  {
-    id: 3,
-    typeId: 1,
-    content: "Why don’t skeletons fight each other? They don’t have the guts.",
-    approved: false,
-  },
-  {
-    id: 4,
-    typeId: 2,
-    content:
-      "Why do programmers prefer dark mode? Because the light attracts bugs!",
-    approved: false,
-  },
-  {
-    id: 5,
-    typeId: 1,
-    content:
-      "I told my wife she was drawing her eyebrows too high. She looked surprised.",
-    approved: false,
-  },
-];
 
 exports.getAllSubmittedJokes = async (req, res) => {
   try {
     const { typeId } = req.query;
-    const filteredJokes = typeId
-      ? submittedJokes.filter((joke) => joke.typeId == typeId)
-      : submittedJokes;
-
-    res.json(filteredJokes);
+    const filter = typeId ? { typeId } : {};
+    const jokes = await Joke.find(filter);
+    res.json(jokes);
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
@@ -46,9 +14,10 @@ exports.getAllSubmittedJokes = async (req, res) => {
 
 exports.getNewJoke = async (req, res) => {
   try {
-    res.json(submittedJokes.filter((joke) => !joke.approved)[0]);
+    const joke = await Joke.findOne({ approved: false });
+    res.json(joke);
   } catch (err) {
-    res.status(400).json({ error: err });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -57,52 +26,53 @@ exports.updateJoke = async (req, res) => {
     const { id } = req.params;
     const { content, typeId } = req.body;
 
-    if (!content) res.status(400).json({ error: "content is required." });
-    if (!typeId) res.status(400).json({ error: "typeId is required." });
+    if (!content) return res.status(400).json({ error: "Content is required." });
+    if (!typeId) return res.status(400).json({ error: "typeId is required." });
 
-    const joke = submittedJokes.find((joke) => joke.id == id);
+    const joke = await Joke.findById(id);
 
     if (joke) {
-      if (content) joke.content = content;
-      if (typeId) joke.typeId = typeId;
+      joke.content = content;
+      joke.typeId = typeId;
+      await joke.save();
       res.json({ message: "Joke updated successfully", joke });
     } else {
       res.status(404).json({ message: "Joke not found" });
     }
   } catch (err) {
-    res.status(400).json({ error: err });
+    res.status(400).json({ error: err.message });
   }
 };
 
 exports.approveJoke = async (req, res) => {
   try {
     const { id } = req.params;
-    const joke = submittedJokes.find((joke) => joke.id == id);
+    const joke = await Joke.findById(id);
 
     if (joke) {
       joke.approved = true;
+      await joke.save();
       res.json({ message: "Joke approved", joke });
     } else {
       res.status(404).json({ message: "Joke not found" });
     }
   } catch (err) {
-    res.status(400).json({ error: err });
+    res.status(400).json({ error: err.message });
   }
 };
 
 exports.rejectJoke = async (req, res) => {
   try {
     const { id } = req.params;
-    const index = submittedJokes.findIndex((joke) => joke.id == id);
+    const joke = await Joke.findByIdAndDelete(id);
 
-    if (index !== -1) {
-      submittedJokes.splice(index, 1);
+    if (joke) {
       res.json({ message: "Joke rejected and removed" });
     } else {
       res.status(404).json({ message: "Joke not found" });
     }
   } catch (err) {
-    res.status(400).json({ error: err });
+    res.status(400).json({ error: err.message });
   }
 };
 
@@ -111,19 +81,16 @@ exports.submitJoke = async (req, res) => {
     const { content, typeId } = req.body;
 
     if (!content || !typeId) {
-      return res
-        .status(400)
-        .json({ message: "Content and typeId are required" });
+      return res.status(400).json({ message: "Content and typeId are required" });
     }
 
-    const newJoke = {
-      id: submittedJokes.length + 1,
+    const newJoke = new Joke({
       content,
       typeId,
       approved: false,
-    };
-    submittedJokes.push(newJoke);
+    });
 
+    await newJoke.save();
     res.status(201).json(newJoke);
   } catch (err) {
     res.status(400).json({ error: err.message });

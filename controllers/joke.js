@@ -83,7 +83,13 @@ exports.submitJoke = async (req, res) => {
     if (!content || !typeId) {
       return res.status(400).json({ message: "Content and typeId are required" });
     }
+    const existingJoke = await Joke.findOne({ content, typeId });
 
+    if (existingJoke) {
+      return res.status(400).json({
+        message: "Joke with the same content and type already exists",
+      });
+    }
     const newJoke = new Joke({
       content,
       typeId,
@@ -96,6 +102,7 @@ exports.submitJoke = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
 
 exports.getJokeTypes = async (req, res) => {
   try {

@@ -62,5 +62,5 @@ app.get('/api/test', (req, res) => {
 // Port
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
-  console.log(`Moderate Jokes Microservice running on ${port}`);
+  console.log(`Submit Jokes Microservice running on ${port}`);
 });
